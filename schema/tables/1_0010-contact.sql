@@ -1,0 +1,7 @@
+CREATE TABLE IF NOT EXISTS CONTACT (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    linkedin VARCHAR(255),
+    github VARCHAR(255)
+);
