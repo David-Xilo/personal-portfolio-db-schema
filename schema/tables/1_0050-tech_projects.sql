@@ -1,0 +1,7 @@
+CREATE TYPE GAME_GENRE AS ENUM ('undefined', 'strategy', 'table top');
+CREATE TABLE IF NOT EXISTS TECH_PROJECTS (
+    id SERIAL PRIMARY KEY,
+    title VARCHAR(255) UNIQUE NOT NULL,
+    description VARCHAR(255) NOT NULL,
+    link_to_git VARCHAR(255) UNIQUE NOT NULL
+);
