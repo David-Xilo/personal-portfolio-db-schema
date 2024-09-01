@@ -1,6 +1,9 @@
 CREATE TYPE GAME_GENRE AS ENUM ('undefined', 'strategy', 'table top');
 CREATE TABLE IF NOT EXISTS GAME (
     id SERIAL PRIMARY KEY,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT NULL,
+    deleted_at TIMESTAMP DEFAULT NULL,
     title VARCHAR(255) UNIQUE NOT NULL,
     genre GAME_GENRE NOT NULL DEFAULT 'undefined',
     description VARCHAR(255) NOT NULL,
