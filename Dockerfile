@@ -16,7 +16,7 @@ COPY ./schema/init/*.sql /docker-entrypoint-initdb.d/
 COPY ./schema/tables/*.sql /docker-entrypoint-initdb.d/
 
 # Copy initialization scripts from constraints directory
-COPY ./schema/constraints/*.sql /docker-entrypoint-initdb.d/
+#COPY ./schema/constraints/*.sql /docker-entrypoint-initdb.d/
 
 # Copy initialization scripts from data_changes directory
 COPY ./schema/data_changes/*.sql /docker-entrypoint-initdb.d/
