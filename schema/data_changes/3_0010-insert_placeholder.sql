@@ -37,8 +37,11 @@ insert into NEWS_TOPIC_OF_THE_SEASONS (news_id, topic_of_the_season_id)
 values ((select id from news where genre = 'finance'), (select id from topic_of_the_seasons where genre = 'tech'));
 
 
-insert into GAMES (title, genre, description, link_to_store, link_to_git)
-values ('game title', 'strategy', 'game description', 'https://github.com/johndoe', 'https://github.com/johndoe');
+insert into GAMES (title, genre, rating, description, link_to_store, link_to_git)
+values ('game title', 'strategy', null, 'game description', 'https://github.com/game', 'https://github.com/johndoe');
+
+insert into GAMES (title, genre, rating, description, link_to_store, link_to_git)
+values ('game with rating title', 'table top', 3, 'game with rating description', 'https://github.com/othergame', null);
 
 
 insert into TECH_PROJECTS (title, description, link_to_git)

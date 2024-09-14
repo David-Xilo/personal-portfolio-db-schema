@@ -6,7 +6,8 @@ CREATE TABLE IF NOT EXISTS GAMES (
     deleted_at TIMESTAMP DEFAULT NULL,
     title VARCHAR(255) UNIQUE NOT NULL,
     genre GAME_GENRES NOT NULL DEFAULT 'undefined',
+    rating INT DEFAULT NULL,
     description VARCHAR(255) NOT NULL,
     link_to_store VARCHAR(255) UNIQUE NOT NULL,
-    link_to_git VARCHAR(255)
+    link_to_git VARCHAR(255) DEFAULT NULL
 );
