@@ -1,0 +1,44 @@
+CREATE TABLE IF NOT EXISTS CONTACTS (
+    id SERIAL PRIMARY KEY,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT NULL,
+    deleted_at TIMESTAMP DEFAULT NULL,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    linkedin VARCHAR(255),
+    github VARCHAR(255),
+    active bool NOT NULL
+);
+
+CREATE UNIQUE INDEX unique_active_contact ON CONTACTS (active)
+    WHERE active = true;
+
+
+CREATE TYPE GAME_GENRES AS ENUM ('undefined', 'strategy', 'table top');
+CREATE TABLE IF NOT EXISTS GAMES (
+     id SERIAL PRIMARY KEY,
+     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+     updated_at TIMESTAMP DEFAULT NULL,
+     deleted_at TIMESTAMP DEFAULT NULL,
+     title VARCHAR(255) UNIQUE NOT NULL,
+     genre GAME_GENRES NOT NULL DEFAULT 'undefined',
+     rating INT DEFAULT NULL,
+     description VARCHAR(255) NOT NULL,
+     link_to_store VARCHAR(255) UNIQUE NOT NULL,
+     link_to_git VARCHAR(255) DEFAULT NULL
+);
+
+
+
+CREATE TABLE IF NOT EXISTS TECH_PROJECTS (
+     id SERIAL PRIMARY KEY,
+     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+     updated_at TIMESTAMP DEFAULT NULL,
+     deleted_at TIMESTAMP DEFAULT NULL,
+     title VARCHAR(255) UNIQUE NOT NULL,
+     description VARCHAR(255) NOT NULL,
+     link_to_git VARCHAR(255) UNIQUE NOT NULL
+);
+
+
+
