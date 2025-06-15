@@ -14,7 +14,7 @@ CREATE UNIQUE INDEX unique_active_contact ON CONTACTS (active)
     WHERE active = true;
 
 
-CREATE TYPE GAME_GENRES AS ENUM ('undefined', 'strategy', 'table top', 'rpg');
+CREATE TYPE GAME_GENRES AS ENUM ('undefined', 'strategy', 'table top', 'RPG');
 CREATE TABLE IF NOT EXISTS GAMES (
      id SERIAL PRIMARY KEY,
      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
