@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS PROJECT_GROUPS (
 );
 
 CREATE TYPE GAME_GENRES AS ENUM ('undefined', 'strategy', 'table top', 'RPG');
-CREATE TABLE IF NOT EXISTS GAMES_PROJECTS (
+CREATE TABLE IF NOT EXISTS GAME_PROJECTS (
      id SERIAL PRIMARY KEY,
      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
      updated_at TIMESTAMP DEFAULT NULL,
@@ -50,7 +50,7 @@ CREATE TABLE IF NOT EXISTS GAMES_PROJECTS (
      link_to_store VARCHAR(255) UNIQUE NOT NULL,
      link_to_git VARCHAR(255) DEFAULT NULL,
 
-     CONSTRAINT fk_games_projects_group
+     CONSTRAINT fk_game_projects_group
          FOREIGN KEY (project_group_id)
              REFERENCES PROJECT_GROUPS(id)
              ON DELETE CASCADE
@@ -92,7 +92,7 @@ CREATE TABLE IF NOT EXISTS FINANCE_PROJECTS (
 
 
 
-CREATE INDEX idx_games_projects_group_id ON GAMES_PROJECTS(project_group_id);
+CREATE INDEX idx_game_projects_group_id ON GAME_PROJECTS(project_group_id);
 CREATE INDEX idx_tech_projects_group_id ON TECH_PROJECTS(project_group_id);
 CREATE INDEX idx_finance_projects_group_id ON FINANCE_PROJECTS(project_group_id);
 
