@@ -41,7 +41,7 @@ WHERE NOT EXISTS (
     WHERE title = 'Safehouse' AND project_type = 'tech'
 );
 
-INSERT INTO TECH_PROJECTS (project_group_id, title, description, link_to_git)
+INSERT INTO TECH_REPOSITORIES (project_group_id, title, description, link_to_git)
 SELECT
     pg.id,
     'safehouse-main-back',
@@ -52,11 +52,11 @@ WHERE pg.title = 'Safehouse'
   AND pg.project_type = 'tech'
   AND pg.deleted_at IS NULL
   AND NOT EXISTS (
-    SELECT 1 FROM TECH_PROJECTS
+    SELECT 1 FROM TECH_REPOSITORIES
     WHERE title = 'safehouse-main-back'
 );
 
-INSERT INTO TECH_PROJECTS (project_group_id, title, description, link_to_git)
+INSERT INTO TECH_REPOSITORIES (project_group_id, title, description, link_to_git)
 SELECT
     pg.id,
     'safehouse-main-front',
@@ -67,11 +67,11 @@ WHERE pg.title = 'Safehouse'
   AND pg.project_type = 'tech'
   AND pg.deleted_at IS NULL
   AND NOT EXISTS (
-    SELECT 1 FROM TECH_PROJECTS
+    SELECT 1 FROM TECH_REPOSITORIES
     WHERE title = 'safehouse-main-front'
 );
 
-INSERT INTO TECH_PROJECTS (project_group_id, title, description, link_to_git)
+INSERT INTO TECH_REPOSITORIES (project_group_id, title, description, link_to_git)
 SELECT
     pg.id,
     'safehouse-db-schema',
@@ -82,7 +82,7 @@ WHERE pg.title = 'Safehouse'
   AND pg.project_type = 'tech'
   AND pg.deleted_at IS NULL
   AND NOT EXISTS (
-    SELECT 1 FROM TECH_PROJECTS
+    SELECT 1 FROM TECH_REPOSITORIES
     WHERE title = 'safehouse-db-schema'
 );
 
