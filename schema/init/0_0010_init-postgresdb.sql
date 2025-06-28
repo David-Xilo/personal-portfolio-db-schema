@@ -1,13 +1,13 @@
--- CREATE USER "safehouse-main-user" WITH PASSWORD 'mypassword';
--- CREATE DATABASE "safehouse-main-db" OWNER "safehouse-main-user";
+-- CREATE USER "dev_user" WITH PASSWORD 'mypassword';
+-- CREATE DATABASE "dev_db" OWNER "dev_user";
 DO $$
     BEGIN
         IF NOT EXISTS (
             SELECT FROM pg_catalog.pg_roles
-            WHERE rolname = 'safehouse-main-user') THEN
-            CREATE ROLE "safehouse-main-user" WITH LOGIN PASSWORD 'mypassword';
+            WHERE rolname = 'dev_user') THEN
+            CREATE ROLE "dev_user" WITH LOGIN PASSWORD 'mypassword';
         ELSE
-            RAISE NOTICE 'Role "safehouse-main-user" already exists, skipping creation.';
+            RAISE NOTICE 'Role "dev_user" already exists, skipping creation.';
         END IF;
     END
 $$;
@@ -16,10 +16,10 @@ DO $$
     BEGIN
         IF NOT EXISTS (
             SELECT FROM pg_database
-            WHERE datname = 'safehouse-main-db') THEN
-            CREATE DATABASE "safehouse-main-db" OWNER "safehouse-main-user";
+            WHERE datname = 'dev_db') THEN
+            CREATE DATABASE "dev_db" OWNER "dev_user";
         ELSE
-            RAISE NOTICE 'Database "safehouse-main-db" already exists, skipping creation.';
+            RAISE NOTICE 'Database "dev_db" already exists, skipping creation.';
         END IF;
     END
 $$;

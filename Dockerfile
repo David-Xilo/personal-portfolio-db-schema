@@ -2,8 +2,8 @@
 FROM postgres:latest
 
 # Set environment variables
-ENV POSTGRES_DB=dev-db
-ENV POSTGRES_USER=dev-user
+ENV POSTGRES_DB=dev_db
+ENV POSTGRES_USER=dev_user
 ENV POSTGRES_PASSWORD=mypassword
 
 # Expose the PostgreSQL port
