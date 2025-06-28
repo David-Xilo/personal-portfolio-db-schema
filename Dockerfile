@@ -2,8 +2,8 @@
 FROM postgres:latest
 
 # Set environment variables
-ENV POSTGRES_DB=safehouse-main-db
-ENV POSTGRES_USER=safehouse-main-user
+ENV POSTGRES_DB=dev-db
+ENV POSTGRES_USER=dev-user
 ENV POSTGRES_PASSWORD=mypassword
 
 # Expose the PostgreSQL port
