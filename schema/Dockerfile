@@ -11,10 +11,10 @@ RUN apk add --no-cache curl postgresql-client && \
     apk del curl
 
 # Copy migration files
-COPY ./migrations /migrations
+COPY migrations /migrations
 
 # Copy your enhanced development script
-COPY ./run-migrations.sh ./run-migrations.sh
+COPY run-migrations.sh ./run-migrations.sh
 RUN chmod +x run-migrations.sh
 
 # Set working directory
