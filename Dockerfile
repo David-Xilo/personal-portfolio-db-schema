@@ -1,25 +1,26 @@
-# Use the official PostgreSQL image from the Docker Hub
-FROM postgres:latest
+# Dockerfile.migrations
+# A lightweight container specifically for running database migrations
 
-# Set environment variables
-ENV POSTGRES_DB=dev_db
-ENV POSTGRES_USER=dev_user
-ENV POSTGRES_PASSWORD=mypassword
+FROM alpine:latest
 
-# Expose the PostgreSQL port
-EXPOSE 5432
+# Install golang-migrate and postgresql-client for database connectivity checks
+RUN apk add --no-cache curl postgresql-client && \
+    curl -L https://github.com/golang-migrate/migrate/releases/latest/download/migrate.linux-amd64.tar.gz | tar xvz && \
+    mv migrate /usr/local/bin/migrate && \
+    chmod +x /usr/local/bin/migrate && \
+    apk del curl
 
-# Copy initialization scripts from init directory
-COPY ./schema/init/*.sql /docker-entrypoint-initdb.d/
+# Copy migration files
+COPY ./migrations /migrations
 
-# Copy initialization scripts from tables directory
-COPY ./schema/tables/*.sql /docker-entrypoint-initdb.d/
+# Copy your enhanced development script
+COPY ./run-migrations.sh ./run-migrations.sh
+RUN chmod +x run-migrations.sh
 
-# Copy initialization scripts from data_changes directory
-COPY ./schema/data_changes/*.sql /docker-entrypoint-initdb.d/
+# Set working directory
+WORKDIR /
 
-# Define the directory to be used as a volume
-# VOLUME /var/lib/postgresql/data
-
-# Set default command
-CMD ["postgres"]
+# Default command runs migrations up
+# Can be overridden: docker run <image> down, docker run <image> status, etc.
+ENTRYPOINT ["./run-migrations.sh"]
+CMD ["up"]
