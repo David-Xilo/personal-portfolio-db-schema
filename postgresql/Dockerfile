@@ -1,7 +1,3 @@
-# Dockerfile.postgres-dev
-# A clean PostgreSQL container for development
-# This container ONLY runs PostgreSQL - no migrations, no application logic
-
 FROM postgres:latest
 
 # Create initialization script to configure PostgreSQL for container networking

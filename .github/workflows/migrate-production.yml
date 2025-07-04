@@ -1,0 +1,102 @@
+name: Production Database Migration
+
+on:
+  workflow_dispatch:
+    inputs:
+      migration_command:
+        description: 'Migration command (up, down, version, etc.)'
+        required: false
+        default: 'up'
+        type: choice
+        options:
+          - up
+          - down
+          - version
+          - force
+      region:
+        description: 'Google Cloud region'
+        required: true
+        default: 'us-central1'
+        type: choice
+        options:
+          - us-central1
+
+env:
+  PROJECT_ID: personal-portfolio-safehouse
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate inputs
+        run: |
+          case "${{ github.event.inputs.region }}" in
+            us-central1) ;;
+            *) echo "ERROR: Invalid region"; exit 1 ;;
+          esac
+
+          case "${{ github.event.inputs.migration_command }}" in
+            up|down|version|force) ;;
+            *) echo "ERROR: Invalid migration command"; exit 1 ;;
+          esac
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: 'projects/942519139037/locations/global/workloadIdentityPools/safehouse-github-pool/providers/safehouse-github-provider'
+          service_account: 'safehouse-terraform-cicd@personal-portfolio-safehouse.iam.gserviceaccount.com'
+
+      - name: Setup Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ github.event.inputs.region }}-docker.pkg.dev
+
+      - name: Verify permissions
+        run: |
+          echo "Using region: ${{ github.event.inputs.region }}"
+          
+          INSTANCE_STATE=$(gcloud sql instances describe safehouse-db-instance --format="value(state)")
+          echo "Instance state: $INSTANCE_STATE"
+          
+          if [ "$INSTANCE_STATE" != "RUNNABLE" ]; then
+            echo "ERROR: Cloud SQL instance is not in RUNNABLE state"
+            exit 1
+          fi
+          
+          gcloud secrets versions access latest --secret="portfolio-safehouse-db-password" > /dev/null
+          echo "Secret Manager access verified"
+
+      - name: Build migration container
+        run: |
+          docker build -f schema/prod/Dockerfile -t ${{ github.event.inputs.region }}-docker.pkg.dev/$PROJECT_ID/safehouse-repo/migrations:$GITHUB_SHA .
+          docker push ${{ github.event.inputs.region }}-docker.pkg.dev/$PROJECT_ID/safehouse-repo/migrations:$GITHUB_SHA
+
+      - name: Run migrations
+        run: |
+          echo "Running database migrations"
+          echo "Region: ${{ github.event.inputs.region }}"
+          echo "Command: ${{ github.event.inputs.migration_command }}"
+          
+          docker run --rm \
+            --network host \
+            -v $HOME/.config/gcloud:/root/.config/gcloud:ro \
+            ${{ github.event.inputs.region }}-docker.pkg.dev/$PROJECT_ID/safehouse-repo/migrations:$GITHUB_SHA \
+            ${{ github.event.inputs.migration_command }}
+
+      - name: Verify migration status
+        run: |
+          echo "Verifying migration status"
+          
+          docker run --rm \
+            --network host \
+            -v $HOME/.config/gcloud:/root/.config/gcloud:ro \
+            ${{ github.event.inputs.region }}-docker.pkg.dev/$PROJECT_ID/safehouse-repo/migrations:$GITHUB_SHA \
+            version
