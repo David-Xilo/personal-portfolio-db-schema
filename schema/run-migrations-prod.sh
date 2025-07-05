@@ -76,7 +76,7 @@ else
 fi
 
 echo "=== Starting Cloud SQL Proxy ==="
-${PROXY_BIN} "${CONNECTION_NAME}" --port 5432 &
+${PROXY_BIN} --instances="${CONNECTION_NAME}"=tcp:5432 &
 PROXY_PID=$!
 echo "Cloud SQL Proxy started (PID: $PROXY_PID)"
 sleep 5
