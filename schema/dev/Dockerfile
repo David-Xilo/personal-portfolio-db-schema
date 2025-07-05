@@ -23,5 +23,5 @@ RUN chmod +x run-migrations-dev.sh
 USER migrate-user
 WORKDIR /
 
-ENTRYPOINT ["./run-migrations.sh"]
+ENTRYPOINT ["./run-migrations-dev.sh"]
 CMD ["up"]

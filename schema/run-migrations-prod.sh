@@ -74,9 +74,13 @@ else
 fi
 
 
-DATABASE_URL="postgres://${DATABASE_USER}:${DB_PASSWORD}@localhost:5432/${DATABASE_NAME}?sslmode=require"
-
 echo "=== Running migration: ${1:-up} ==="
-migrate -path /migrations -database "${DATABASE_URL}" "${1:-up}"
+export PGHOST="localhost"
+export PGPORT="5432"
+export PGDATABASE="${DATABASE_NAME}"
+export PGUSER="${DATABASE_USER}"
+export PGPASSWORD="${DB_PASSWORD}"
+export PGSSLMODE="require"
+migrate -path /migrations -database "postgres://${DATABASE_USER}@localhost:5432/${DATABASE_NAME}?sslmode=require" "${1:-up}"
 
 echo "=== Migration completed successfully ==="

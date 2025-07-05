@@ -11,9 +11,13 @@ done
 
 echo "=== PostgreSQL is ready! ==="
 
-DATABASE_URL="postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}?sslmode=disable"
-
 echo "=== Running migration ==="
-migrate -path /migrations -database "${DATABASE_URL}" "${1:-up}"
+export PGHOST="${POSTGRES_HOST}"
+export PGPORT="${POSTGRES_PORT}"
+export PGDATABASE="${POSTGRES_DB}"
+export PGUSER="${POSTGRES_USER}"
+export PGPASSWORD="${POSTGRES_PASSWORD}"
+export PGSSLMODE="disable"
+migrate -path /migrations -database "postgres://${POSTGRES_USER}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}?sslmode=disable" "${1:-up}"
 
 echo "=== Migration completed successfully ==="
