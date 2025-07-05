@@ -48,17 +48,17 @@ echo "All Google Cloud resources verified"
 echo "=== Building migration container ==="
 docker build -f schema/prod/Dockerfile -t safehouse-migrations:manual .
 
-if ! command -v ${PROXY_BIN} &> /dev/null; then
+if ! command -v "${PROXY_BIN}" &> /dev/null; then
     echo "Installing Cloud SQL Proxy..."
-    curl -fsSL -o ${PROXY_BIN} "${PROXY_URL}"
+    curl -fsSL -o "${PROXY_BIN}" "${PROXY_URL}"
     echo "${PROXY_CHECKSUM}  ${PROXY_BIN}" | sha256sum -c || {
         echo "ERROR: Checksum verification failed"
-        rm -f ${PROXY_BIN}
+        rm -f "${PROXY_BIN}"
         exit 1
     }
-    chmod +x ${PROXY_BIN}
+    chmod +x "${PROXY_BIN}"
     mkdir -p "$HOME/bin"
-    mv ${PROXY_BIN} "$HOME/bin/"
+    mv "${PROXY_BIN}" "$HOME/bin/"
     export PATH="$HOME/bin:$PATH"
     echo "Cloud SQL Proxy installed"
 fi

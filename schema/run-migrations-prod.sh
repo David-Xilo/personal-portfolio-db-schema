@@ -53,7 +53,7 @@ cleanup() {
 }
 trap cleanup EXIT
 
-if ! command -v ${PROXY_BIN} > /dev/null; then
+if ! command -v "${PROXY_BIN}" > /dev/null; then
   echo "Installing Cloud SQL Proxy v${PROXY_VERSION}"
 
   curl -fsSL "${PROXY_URL}" -o "${PROXY_BIN}"
@@ -76,7 +76,7 @@ else
 fi
 
 echo "=== Starting Cloud SQL Proxy ==="
-cloud-sql-proxy "${CONNECTION_NAME}" --port 5432 &
+${PROXY_BIN} "${CONNECTION_NAME}" --port 5432 &
 PROXY_PID=$!
 echo "Cloud SQL Proxy started (PID: $PROXY_PID)"
 sleep 5
