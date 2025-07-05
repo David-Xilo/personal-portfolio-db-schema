@@ -82,6 +82,7 @@ echo "Cloud SQL Proxy started (PID: $PROXY_PID)"
 sleep 5
 
 echo "=== Running migration: ${1:-up} ==="
-migrate -path /migrations -database "postgres://${DATABASE_USER}:${DB_PASSWORD}@localhost:5432/${DATABASE_NAME}?sslmode=require" "${1:-up}"
+export PGPASSWORD="${DB_PASSWORD}"
+migrate -path /migrations -database "postgres://${DATABASE_USER}@localhost:5432/${DATABASE_NAME}?sslmode=require" "${1:-up}"
 
 echo "=== Migration completed successfully ==="
