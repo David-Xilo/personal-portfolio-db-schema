@@ -10,6 +10,13 @@ DATABASE_NAME="safehouse_db"
 DATABASE_USER="safehouse_db_user"
 PASSWORD_SECRET="portfolio-safehouse-db-password"
 
+
+PROXY_VERSION=2.8.0
+PROXY_BIN=cloud-sql-proxy
+PROXY_URL="https://storage.googleapis.com/cloud-sql-connectors/cloud-sql-proxy/v${PROXY_VERSION}/${PROXY_BIN}.linux.amd64"
+PROXY_CHECKSUM=831a5007b6a087c917bf6b46eb7df6289ea37bab7b655c9ed172b8d9e7011e78
+
+
 echo "=== Fetching configuration from Google Cloud ==="
 
 echo "Getting Cloud SQL instance details..."
@@ -40,21 +47,28 @@ PROXY_PID=""
 cleanup() {
     if [ -n "$PROXY_PID" ]; then
         echo "Cleaning up Cloud SQL Proxy (PID: $PROXY_PID)..."
-        kill $PROXY_PID 2>/dev/null || true
-        wait $PROXY_PID 2>/dev/null || true
+        kill "$PROXY_PID" 2>/dev/null || true
+        wait "$PROXY_PID" 2>/dev/null || true
     fi
 }
 trap cleanup EXIT
 
-if ! pgrep -f "cloud-sql-proxy.*$CONNECTION_NAME" > /dev/null; then
-    echo "Starting Cloud SQL Proxy..."
-    cloud-sql-proxy "$CONNECTION_NAME" &
-    PROXY_PID=$!
-    echo "Cloud SQL Proxy started with PID: $PROXY_PID"
+if ! command -v ${PROXY_BIN} > /dev/null; then
+  echo "Installing Cloud SQL Proxy v${PROXY_VERSION}"
 
-    # Wait for proxy to be ready
-    echo "Waiting for proxy to be ready..."
-    sleep 10
+  curl -fsSL "${PROXY_URL}" -o "${PROXY_BIN}"
+
+  echo "${PROXY_CHECKSUM}  ${PROXY_BIN}" | sha256sum -c --quiet - \
+    || {
+      echo >&2 "ERROR: checksum mismatch for ${PROXY_BIN}"
+      rm -f "${PROXY_BIN}"
+      exit 1
+    }
+
+  chmod +x "${PROXY_BIN}"
+  sudo mv "${PROXY_BIN}" /usr/local/bin/
+  echo "Cloud SQL Proxy installed (v${PROXY_VERSION})"
+  sleep 5
 else
     echo "Cloud SQL Proxy already running"
 fi
