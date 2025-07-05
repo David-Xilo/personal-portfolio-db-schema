@@ -23,6 +23,7 @@ on:
 
 env:
   PROJECT_ID: personal-portfolio-safehouse
+  PASSWORD_SECRET: portfolio-safehouse-db-password
 
 jobs:
   migrate:
@@ -71,7 +72,7 @@ jobs:
             exit 1
           fi
           
-          gcloud secrets versions access latest --secret="portfolio-safehouse-db-password" > /dev/null
+          gcloud secrets versions access latest --secret="$PASSWORD_SECRET" > /dev/null
           echo "Secret Manager access verified"
 
       - name: Build migration container

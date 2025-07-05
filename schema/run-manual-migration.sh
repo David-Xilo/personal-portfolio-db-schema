@@ -12,6 +12,7 @@ echo ""
 
 PROJECT_ID="personal-portfolio-safehouse"
 INSTANCE_NAME="safehouse-db-instance"
+PASSWORD_SECRET="portfolio-safehouse-db-password"
 
 PROXY_VERSION=2.8.0
 PROXY_BIN=cloud-sql-proxy
@@ -37,8 +38,8 @@ if ! gcloud sql instances describe $INSTANCE_NAME --format="value(name)" >/dev/n
 fi
 
 echo "Verifying Secret Manager access..."
-if ! gcloud secrets versions access latest --secret="portfolio-safehouse-db-password" >/dev/null 2>&1; then
-    echo "ERROR: Cannot access secret 'portfolio-safehouse-db-password'"
+if ! gcloud secrets versions access latest --secret="${PASSWORD_SECRET}" >/dev/null 2>&1; then
+    echo "ERROR: Cannot access secret '${PASSWORD_SECRET}'"
     echo "Please ensure your account has Secret Manager access"
     exit 1
 fi
@@ -47,21 +48,6 @@ echo "All Google Cloud resources verified"
 
 echo "=== Building migration container ==="
 docker build -f schema/prod/Dockerfile -t safehouse-migrations:manual .
-
-if ! command -v "${PROXY_BIN}" &> /dev/null; then
-    echo "Installing Cloud SQL Proxy..."
-    curl -fsSL -o "${PROXY_BIN}" "${PROXY_URL}"
-    echo "${PROXY_CHECKSUM}  ${PROXY_BIN}" | sha256sum -c || {
-        echo "ERROR: Checksum verification failed"
-        rm -f "${PROXY_BIN}"
-        exit 1
-    }
-    chmod +x "${PROXY_BIN}"
-    mkdir -p "$HOME/bin"
-    mv "${PROXY_BIN}" "$HOME/bin/"
-    export PATH="$HOME/bin:$PATH"
-    echo "Cloud SQL Proxy installed"
-fi
 
 echo "=== Running migration: $MIGRATION_COMMAND ==="
 
