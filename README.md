@@ -42,3 +42,15 @@ docker logs safehouse-db-container -f
 docker exec -it safehouse-db-container /bin/bash
 
 
+
+Recommendations:
+1. Remove trust authentication from PostgreSQL Docker config
+2. Use specific Docker image tags instead of latest
+3. Implement proper authentication for database connections
+4. Enable SSL for all database connections
+5. Use environment variables instead of command-line arguments for passwords
+6. Add signature verification for downloaded binaries
+7. Restrict network access in Docker containers
+8. Consider removing force migration option from production workflows
+
+
