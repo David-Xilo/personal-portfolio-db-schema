@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 set -e
 
 # Manual migration runner for production emergencies
@@ -13,11 +13,6 @@ echo ""
 PROJECT_ID="personal-portfolio-safehouse"
 INSTANCE_NAME="safehouse-db-instance"
 PASSWORD_SECRET="portfolio-safehouse-db-password"
-
-PROXY_VERSION=2.8.0
-PROXY_BIN=cloud-sql-proxy
-PROXY_URL="https://storage.googleapis.com/cloud-sql-connectors/cloud-sql-proxy/v${PROXY_VERSION}/${PROXY_BIN}.linux.amd64"
-PROXY_CHECKSUM=831a5007b6a087c917bf6b46eb7df6289ea37bab7b655c9ed172b8d9e7011e78
 
 echo "=== Checking Google Cloud authentication ==="
 if ! gcloud auth list --filter=status:ACTIVE --format="value(account)" | grep -q .; then
