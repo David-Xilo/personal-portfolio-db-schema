@@ -17,8 +17,8 @@ RUN adduser -D -s /bin/sh migrate-user && \
     chown migrate-user:migrate-user /migrations
 
 COPY migrations /migrations
-COPY run-migrations.sh ./run-migrations.sh
-RUN chmod +x run-migrations.sh
+COPY run-migrations-dev.sh ./run-migrations-dev.sh
+RUN chmod +x run-migrations-dev.sh
 
 USER migrate-user
 WORKDIR /

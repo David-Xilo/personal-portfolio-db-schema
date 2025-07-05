@@ -1,6 +1,7 @@
 #!/bin/sh
 set -e
 
+# This file exists just to run locally
 
 echo "=== Waiting for PostgreSQL to be ready ==="
 until pg_isready -h "${POSTGRES_HOST}" -p "${POSTGRES_PORT}" -U "${POSTGRES_USER}" -d "${POSTGRES_DB}"; do
