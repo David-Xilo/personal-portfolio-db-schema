@@ -1,4 +1,4 @@
-FROM postgres:latest
+FROM postgres:17.5
 
 # Create initialization script to configure PostgreSQL for container networking
 RUN echo '#!/bin/bash' > /docker-entrypoint-initdb.d/setup_networking.sh && \

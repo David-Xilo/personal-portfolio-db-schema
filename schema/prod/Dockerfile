@@ -1,4 +1,4 @@
-FROM google/cloud-sdk:alpine
+FROM google/cloud-sdk:529.0.0-alpine
 
 ENV MIGRATE_VERSION=4.18.3
 ENV PROXY_VERSION=2.8.0
