@@ -11,9 +11,8 @@ RUN apk add --no-cache postgresql-client ca-certificates curl && \
     tar xvz -f migrate.tar.gz && \
     mv migrate /usr/local/bin/migrate && \
     chmod +x /usr/local/bin/migrate && \
-    rm migrate.tar.gz
-
-RUN curl -L "https://storage.googleapis.com/cloud-sql-connectors/cloud-sql-proxy/v${PROXY_VERSION}/cloud-sql-proxy.linux.amd64" -o cloud-sql-proxy && \
+    rm migrate.tar.gz && \
+    curl -L "https://storage.googleapis.com/cloud-sql-connectors/cloud-sql-proxy/v${PROXY_VERSION}/cloud-sql-proxy.linux.amd64" -o cloud-sql-proxy && \
     echo "${PROXY_CHECKSUM}  cloud-sql-proxy" | sha256sum -c && \
     chmod +x cloud-sql-proxy && \
     mv cloud-sql-proxy /usr/local/bin/ && \
