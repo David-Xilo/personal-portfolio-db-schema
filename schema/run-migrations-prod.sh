@@ -66,21 +66,22 @@ if ! command -v ${PROXY_BIN} > /dev/null; then
     }
 
   chmod +x "${PROXY_BIN}"
-  sudo mv "${PROXY_BIN}" /usr/local/bin/
+  mkdir -p "$HOME/bin"
+  mv "${PROXY_BIN}" "$HOME/bin/"
+  export PATH="$HOME/bin:$PATH"
   echo "Cloud SQL Proxy installed (v${PROXY_VERSION})"
   sleep 5
 else
-    echo "Cloud SQL Proxy already running"
+    echo "Cloud SQL Proxy already available"
 fi
 
+echo "=== Starting Cloud SQL Proxy ==="
+cloud-sql-proxy "${CONNECTION_NAME}" --port 5432 &
+PROXY_PID=$!
+echo "Cloud SQL Proxy started (PID: $PROXY_PID)"
+sleep 5
 
 echo "=== Running migration: ${1:-up} ==="
-export PGHOST="localhost"
-export PGPORT="5432"
-export PGDATABASE="${DATABASE_NAME}"
-export PGUSER="${DATABASE_USER}"
-export PGPASSWORD="${DB_PASSWORD}"
-export PGSSLMODE="require"
-migrate -path /migrations -database "postgres://${DATABASE_USER}@localhost:5432/${DATABASE_NAME}?sslmode=require" "${1:-up}"
+migrate -path /migrations -database "postgres://${DATABASE_USER}:${DB_PASSWORD}@localhost:5432/${DATABASE_NAME}?sslmode=require" "${1:-up}"
 
 echo "=== Migration completed successfully ==="

@@ -50,7 +50,7 @@ docker build -f schema/prod/Dockerfile -t safehouse-migrations:manual .
 # Check if cloud-sql-proxy is available
 if ! command -v cloud-sql-proxy &> /dev/null; then
     echo "Installing Cloud SQL Proxy..."
-    curl -o cloud-sql-proxy https://storage.googleapis.com/cloud-sql-connectors/cloud-sql-proxy/v2.7.0/cloud-sql-proxy.linux.amd64
+    curl -o cloud-sql-proxy https://storage.googleapis.com/cloud-sql-connectors/cloud-sql-proxy/v2.8.0/cloud-sql-proxy.linux.amd64
     chmod +x cloud-sql-proxy
     sudo mv cloud-sql-proxy /usr/local/bin/
     echo "Cloud SQL Proxy installed"
