@@ -86,12 +86,14 @@ jobs:
           echo "Command: ${{ github.event.inputs.migration_command }}"
           
           docker run --rm \
-            --network host \
             --memory="256m" \
             --memory-swap="256m" \
             --cpus="0.5" \
             --pids-limit 50 \
-            -v $HOME/.config/gcloud:/root/.config/gcloud:ro \
+            --cap-drop=ALL \
+            --security-opt=no-new-privileges \
+            -e GOOGLE_APPLICATION_CREDENTIALS=/tmp/gcloud-key.json \
+            -v $HOME/.config/gcloud/application_default_credentials.json:/tmp/gcloud-key.json:ro \
             ${{ github.event.inputs.region }}-docker.pkg.dev/$PROJECT_ID/safehouse-repo/migrations:$GITHUB_SHA \
             ${{ github.event.inputs.migration_command }} &
           
@@ -109,11 +111,13 @@ jobs:
           echo "Verifying migration status"
           
           timeout 60 docker run --rm \
-            --network host \
             --memory="128m" \
             --memory-swap="128m" \
             --cpus="0.25" \
             --pids-limit 20 \
-            -v $HOME/.config/gcloud:/root/.config/gcloud:ro \
+            --cap-drop=ALL \
+            --security-opt=no-new-privileges \
+            -e GOOGLE_APPLICATION_CREDENTIALS=/tmp/gcloud-key.json \
+            -v $HOME/.config/gcloud/application_default_credentials.json:/tmp/gcloud-key.json:ro \
             ${{ github.event.inputs.region }}-docker.pkg.dev/$PROJECT_ID/safehouse-repo/migrations:$GITHUB_SHA \
             version
