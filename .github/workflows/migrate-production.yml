@@ -1,0 +1,124 @@
+name: Production Database Migration
+
+on:
+  workflow_dispatch:
+    inputs:
+      migration_command:
+        description: 'Migration command (up, down, version, etc.)'
+        required: false
+        default: 'up'
+        type: choice
+        options:
+          - up
+          - down
+          - version
+          - force
+      region:
+        description: 'Google Cloud region'
+        required: true
+        default: 'us-central1'
+        type: choice
+        options:
+          - us-central1
+
+env:
+  PROJECT_ID: personal-portfolio-safehouse
+  PASSWORD_SECRET: portfolio-safehouse-db-password
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate inputs
+        run: |
+          case "${{ github.event.inputs.region }}" in
+            us-central1) ;;
+            *) echo "ERROR: Invalid region"; exit 1 ;;
+          esac
+
+          case "${{ github.event.inputs.migration_command }}" in
+            up|down|version|force) ;;
+            *) echo "ERROR: Invalid migration command"; exit 1 ;;
+          esac
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: 'projects/942519139037/locations/global/workloadIdentityPools/safehouse-github-pool/providers/safehouse-github-provider'
+          service_account: 'safehouse-terraform-cicd@personal-portfolio-safehouse.iam.gserviceaccount.com'
+
+      - name: Setup Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ github.event.inputs.region }}-docker.pkg.dev
+
+      - name: Verify permissions
+        run: |
+          echo "Using region: ${{ github.event.inputs.region }}"
+          
+          INSTANCE_STATE=$(gcloud sql instances describe safehouse-db-instance --format="value(state)")
+          echo "Instance state: $INSTANCE_STATE"
+          
+          if [ "$INSTANCE_STATE" != "RUNNABLE" ]; then
+            echo "ERROR: Cloud SQL instance is not in RUNNABLE state"
+            exit 1
+          fi
+          
+          gcloud secrets versions access latest --secret="$PASSWORD_SECRET" > /dev/null
+          echo "Secret Manager access verified"
+
+      - name: Build migration container
+        run: |
+          docker build -f schema/prod/Dockerfile -t ${{ github.event.inputs.region }}-docker.pkg.dev/$PROJECT_ID/safehouse-repo/migrations:$GITHUB_SHA .
+          docker push ${{ github.event.inputs.region }}-docker.pkg.dev/$PROJECT_ID/safehouse-repo/migrations:$GITHUB_SHA
+
+      - name: Run migrations
+        run: |
+          echo "Running database migrations"
+          echo "Region: ${{ github.event.inputs.region }}"
+          echo "Command: ${{ github.event.inputs.migration_command }}"
+          
+          docker run --rm \
+            --memory="256m" \
+            --memory-swap="256m" \
+            --cpus="0.5" \
+            --pids-limit 50 \
+            --cap-drop=ALL \
+            --security-opt=no-new-privileges \
+            -e GOOGLE_APPLICATION_CREDENTIALS=/tmp/gcloud-key.json \
+            -v $HOME/.config/gcloud/application_default_credentials.json:/tmp/gcloud-key.json:ro \
+            ${{ github.event.inputs.region }}-docker.pkg.dev/$PROJECT_ID/safehouse-repo/migrations:$GITHUB_SHA \
+            ${{ github.event.inputs.migration_command }} &
+          
+          MIGRATION_PID=$!
+          
+          # Wait up to 5 minutes for migration to complete
+          timeout 300 wait $MIGRATION_PID || {
+            echo "ERROR: Migration timed out after 5 minutes"
+            docker kill $(docker ps -q --filter ancestor=${{ github.event.inputs.region }}-docker.pkg.dev/$PROJECT_ID/safehouse-repo/migrations:$GITHUB_SHA) 2>/dev/null || true
+            exit 1
+          }
+
+      - name: Verify migration status
+        run: |
+          echo "Verifying migration status"
+          
+          timeout 60 docker run --rm \
+            --memory="128m" \
+            --memory-swap="128m" \
+            --cpus="0.25" \
+            --pids-limit 20 \
+            --cap-drop=ALL \
+            --security-opt=no-new-privileges \
+            -e GOOGLE_APPLICATION_CREDENTIALS=/tmp/gcloud-key.json \
+            -v $HOME/.config/gcloud/application_default_credentials.json:/tmp/gcloud-key.json:ro \
+            ${{ github.event.inputs.region }}-docker.pkg.dev/$PROJECT_ID/safehouse-repo/migrations:$GITHUB_SHA \
+            version
