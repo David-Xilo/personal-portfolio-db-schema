@@ -50,7 +50,7 @@ docker build -f schema/prod/Dockerfile -t safehouse-migrations:manual .
 
 if ! command -v ${PROXY_BIN} &> /dev/null; then
     echo "Installing Cloud SQL Proxy..."
-    curl -o ${PROXY_BIN} "${PROXY_URL}"
+    curl -fsSL -o ${PROXY_BIN} "${PROXY_URL}"
     echo "${PROXY_CHECKSUM}  ${PROXY_BIN}" | sha256sum -c || {
         echo "ERROR: Checksum verification failed"
         rm -f ${PROXY_BIN}

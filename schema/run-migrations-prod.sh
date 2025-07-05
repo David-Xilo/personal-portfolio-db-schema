@@ -21,7 +21,7 @@ echo "=== Fetching configuration from Google Cloud ==="
 
 echo "Getting Cloud SQL instance details..."
 CONNECTION_NAME=$(gcloud sql instances describe $INSTANCE_NAME \
-    --project=$PROJECT_ID \
+    --project="${PROJECT_ID}" \
     --format="value(connectionName)")
 
 if [ -z "$CONNECTION_NAME" ]; then
