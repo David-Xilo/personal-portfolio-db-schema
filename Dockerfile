@@ -20,7 +20,6 @@ COPY schema/migrations /migrations
 COPY schema/run-migrations-prod.sh ./run-migrations-prod.sh
 RUN chmod +x run-migrations-prod.sh
 
-USER migrate-user
 WORKDIR /
 
 ENTRYPOINT ["./run-migrations-prod.sh"]
