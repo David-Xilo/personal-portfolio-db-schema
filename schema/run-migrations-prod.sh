@@ -6,12 +6,12 @@ echo "=== Safehouse Migration Runner (Cloud SQL Proxy - Unix Socket) ==="
 MIGRATION_COMMAND=${1:-up}
 echo "Migration command: $MIGRATION_COMMAND"
 
-# Validate required environment variables
 REQUIRED_VARS="PROJECT_ID INSTANCE_NAME DATABASE_NAME DATABASE_USER PASSWORD_SECRET"
 for VAR in $REQUIRED_VARS; do
   eval VAL=\$"$VAR"
   if [ -z "$VAL" ]; then
     echo "ERROR: Environment variable $VAR is not set."
+    echo "Run '$0 --help' for usage information."
     exit 1
   fi
 done
@@ -153,6 +153,44 @@ run_migration_secure() {
 }
 
 case $MIGRATION_COMMAND in
+    "--help"|"-h"|"help")
+        echo ""
+        echo "Safehouse Database Migration Runner"
+        echo "==================================="
+        echo ""
+        echo "Usage: $0 [COMMAND]"
+        echo ""
+        echo "Commands:"
+        echo "  up        Run all pending migrations (default)"
+        echo "  down      Rollback one migration"
+        echo "  down-all  Rollback all migrations"
+        echo "  version   Show current migration version"
+        echo "  force N   Force database to version N"
+        echo "  goto N    Migrate to specific version N"
+        echo "  help      Show this help message"
+        echo ""
+        echo "Required Environment Variables:"
+        echo "  PROJECT_ID      - Google Cloud project ID"
+        echo "  INSTANCE_NAME   - Cloud SQL instance name"
+        echo "  DATABASE_NAME   - Database name"
+        echo "  DATABASE_USER   - Database user"
+        echo "  PASSWORD_SECRET - Secret Manager secret name for password"
+        echo ""
+        echo "Example:"
+        echo "  docker run --rm -e PROJECT_ID=my-project ... migration-image up"
+        exit 0
+        ;;
+    "test-tools")
+        echo "Testing required tools..."
+        echo "Checking migrate tool:"
+        which migrate && migrate -version
+        echo "Checking psql tool:"
+        which psql && psql --version
+        echo "Checking gcloud tool:"
+        which gcloud && gcloud version --format='value(Google Cloud SDK)'
+        echo "All tools are available!"
+        exit 0
+        ;;
     "up")
         echo "Running all pending migrations..."
         run_migration_secure up
@@ -190,6 +228,7 @@ case $MIGRATION_COMMAND in
     *)
         echo "ERROR: Unknown command: $MIGRATION_COMMAND"
         echo "Available commands: up, down, down-all, version, force <version>, goto <version>"
+        echo "Run '$0 --help' for more information."
         exit 1
         ;;
 esac

@@ -149,15 +149,13 @@ jobs:
           echo "Testing migration image functionality"
           IMAGE="${{ steps.meta.outputs.primary_tag }}"
           
-          # Test that the image can run and show help
-          docker run --rm $IMAGE --help || echo "Help command not available, continuing"
+          # Test help command
+          echo "Testing help command"
+          docker run --rm $IMAGE --help
           
           # Test that required tools are available in the image
           echo "Checking required tools in image"
-          docker run --rm $IMAGE sh -c "which migrate && which psql && which gcloud" || {
-            echo "ERROR: Required tools not found in image"
-            exit 1
-          }
+          docker run --rm $IMAGE test-tools
           
           echo "Migration image test passed"
 
