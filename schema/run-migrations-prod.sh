@@ -86,8 +86,8 @@ setup_iam_database_connection() {
     echo "=== Setting up IAM database connection ==="
 
     if [ -n "$GOOGLE_ACCESS_TOKEN" ]; then
-        echo "Authenticating gcloud with provided token"
-        echo "$GOOGLE_ACCESS_TOKEN" | gcloud auth activate-service-account --access-token-file=-
+        echo "Using provided Google access token for gcloud"
+        export GOOGLE_OAUTH_ACCESS_TOKEN="$GOOGLE_ACCESS_TOKEN"
     fi
 
     CONNECTION_NAME=$(gcloud sql instances describe "$INSTANCE_NAME" \
