@@ -1,124 +1,226 @@
-name: Production Database Migration
+name: Build and Push Migration Image
 
 on:
   workflow_dispatch:
     inputs:
-      migration_command:
-        description: 'Migration command (up, down, version, etc.)'
-        required: false
-        default: 'up'
-        type: choice
-        options:
-          - up
-          - down
-          - version
-          - force
-      region:
-        description: 'Google Cloud region'
+      environment:
+        description: 'Environment to deploy to'
         required: true
-        default: 'us-central1'
+        default: 'prod'
         type: choice
         options:
-          - us-central1
+          - prod
+      tag_version:
+        description: 'Custom tag version (e.g., v1.0.0)'
+        required: true
+        type: string
 
 env:
   PROJECT_ID: personal-portfolio-safehouse
-  PASSWORD_SECRET: portfolio-safehouse-db-password
+  SERVICE_NAME: safehouse-migrations
+  REGION: us-central1
+  SERVICE_ACCOUNT_EMAIL: 'safehouse-terraform-cicd@personal-portfolio-safehouse.iam.gserviceaccount.com'
+  WORKLOAD_IDENTITY_PROVIDER: 'projects/942519139037/locations/global/workloadIdentityPools/safehouse-github-pool/providers/safehouse-github-provider'
 
 jobs:
-  migrate:
+  test:
     runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate migration files
+        run: |
+          echo "Validating migration file structure"
+          
+          # Check if migrations directory exists
+          if [ ! -d "migrations" ]; then
+            echo "ERROR: migrations/ directory not found"
+            exit 1
+          fi
+          
+          # Check for .sql files
+          SQL_FILES=$(find migrations -name "*.sql" | wc -l)
+          if [ $SQL_FILES -eq 0 ]; then
+            echo "WARNING: No .sql files found in migrations/"
+          else
+            echo "Found $SQL_FILES SQL migration files"
+          fi
+          
+          # Check for required scripts
+          if [ ! -f "run-migrations-prod.sh" ]; then
+            echo "ERROR: run-migrations-prod.sh not found"
+            exit 1
+          fi
+          
+          if [ ! -f "Dockerfile" ]; then
+            echo "ERROR: Dockerfile not found"
+            exit 1
+          fi
+          
+          echo "Migration structure validation passed"
+
+      - name: Test Docker build
+        run: |
+          echo "Testing Docker build"
+          docker build -t test-migration-image .
+          echo "Docker build test passed"
+
+  build-and-push:
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.event_name == 'workflow_dispatch'
+    outputs:
+      image: ${{ steps.meta.outputs.primary_tag }}
+      all_tags: ${{ steps.meta.outputs.tags }}
+
     permissions:
       contents: read
       id-token: write
 
     steps:
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Validate inputs
+      - name: Authenticate to Google Cloud using Workload Identity
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.SERVICE_ACCOUNT_EMAIL }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for GCR
+        run: gcloud auth configure-docker
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Generate image tags
+        id: meta
         run: |
-          case "${{ github.event.inputs.region }}" in
-            us-central1) ;;
-            *) echo "ERROR: Invalid region"; exit 1 ;;
-          esac
+          TAGS=""
+          ENVIRONMENT="${{ github.event.inputs.environment }}"
+          CUSTOM_TAG="${{ github.event.inputs.tag_version }}"
+          
+          # Always tag with commit SHA
+          TAGS="${TAGS}gcr.io/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}:${{ github.sha }},"
+          
+          # Tag based on environment
+          if [[ "$ENVIRONMENT" == "prod" ]]; then
+            TAGS="${TAGS}gcr.io/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}:latest,"
+          elif [[ "$ENVIRONMENT" == "dev" ]]; then
+            TAGS="${TAGS}gcr.io/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}:dev,"
+          fi
+          
+          # Add custom tag if provided
+          if [[ -n "$CUSTOM_TAG" ]]; then
+            TAGS="${TAGS}gcr.io/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}:${CUSTOM_TAG},"
+          fi
+          
+          # Remove trailing comma
+          TAGS=${TAGS%,}
+          
+          echo "tags=${TAGS}" >> $GITHUB_OUTPUT
+          echo "Generated tags: ${TAGS}"
+          
+          # Extract primary tag
+          PRIMARY_TAG=$(echo $TAGS | cut -d',' -f1)
+          echo "primary_tag=${PRIMARY_TAG}" >> $GITHUB_OUTPUT
+          echo "Primary tag: ${PRIMARY_TAG}"
 
-          case "${{ github.event.inputs.migration_command }}" in
-            up|down|version|force) ;;
-            *) echo "ERROR: Invalid migration command"; exit 1 ;;
-          esac
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64
+          build-args: |
+            ENV=${{ github.event.inputs.environment }}
+            GCP_PROJECT_ID=${{ env.PROJECT_ID }}
+            BUILD_TIME=${{ github.run_number }}
+            GIT_COMMIT=${{ github.sha }}
 
+      - name: Test migration image
+        run: |
+          echo "Testing migration image functionality"
+          IMAGE="${{ steps.meta.outputs.primary_tag }}"
+          
+          # Test that the image can run and show help
+          docker run --rm $IMAGE --help || echo "Help command not available, continuing"
+          
+          # Test that required tools are available in the image
+          echo "Checking required tools in image"
+          docker run --rm $IMAGE sh -c "which migrate && which psql && which gcloud" || {
+            echo "ERROR: Required tools not found in image"
+            exit 1
+          }
+          
+          echo "Migration image test passed"
+
+      - name: Output build summary
+        run: |
+          echo "## Database Migration Image Build Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** ${{ github.event.inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Custom Tag:** ${{ github.event.inputs.tag_version || 'None' }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Triggered by:** @${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Built Images:**" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "${{ steps.meta.outputs.tags }}" | tr ',' '\n' >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Primary Migration Image:**" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "${{ steps.meta.outputs.primary_tag }}" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+  security-scan:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
-          workload_identity_provider: 'projects/942519139037/locations/global/workloadIdentityPools/safehouse-github-pool/providers/safehouse-github-provider'
-          service_account: 'safehouse-terraform-cicd@personal-portfolio-safehouse.iam.gserviceaccount.com'
+          workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.SERVICE_ACCOUNT_EMAIL }}
 
-      - name: Setup Cloud SDK
+      - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: Configure Docker for Artifact Registry
-        run: gcloud auth configure-docker ${{ github.event.inputs.region }}-docker.pkg.dev
+      - name: Configure Docker for GCR
+        run: gcloud auth configure-docker
 
-      - name: Verify permissions
+      - name: Scan migration image for vulnerabilities
         run: |
-          echo "Using region: ${{ github.event.inputs.region }}"
+          IMAGE="${{ needs.build-and-push.outputs.image }}"
           
-          INSTANCE_STATE=$(gcloud sql instances describe safehouse-db-instance --format="value(state)")
-          echo "Instance state: $INSTANCE_STATE"
+          echo "Scanning migration image: $IMAGE"
+          echo "All built tags: ${{ needs.build-and-push.outputs.all_tags }}"
           
-          if [ "$INSTANCE_STATE" != "RUNNABLE" ]; then
-            echo "ERROR: Cloud SQL instance is not in RUNNABLE state"
-            exit 1
-          fi
+          # GCP vulnerability scanning (if available)
+          echo "Running GCP vulnerability scan"
+          gcloud container images scan $IMAGE --remote || echo "GCP vulnerability scanning not available in this region"
           
-          gcloud secrets versions access latest --secret="$PASSWORD_SECRET" > /dev/null
-          echo "Secret Manager access verified"
-
-      - name: Build migration container
-        run: |
-          docker build -f schema/prod/Dockerfile -t ${{ github.event.inputs.region }}-docker.pkg.dev/$PROJECT_ID/safehouse-repo/migrations:$GITHUB_SHA .
-          docker push ${{ github.event.inputs.region }}-docker.pkg.dev/$PROJECT_ID/safehouse-repo/migrations:$GITHUB_SHA
-
-      - name: Run migrations
-        run: |
-          echo "Running database migrations"
-          echo "Region: ${{ github.event.inputs.region }}"
-          echo "Command: ${{ github.event.inputs.migration_command }}"
-          
+          # Trivy security scan
+          echo "Running Trivy security scan"
           docker run --rm \
-            --memory="256m" \
-            --memory-swap="256m" \
-            --cpus="0.5" \
-            --pids-limit 50 \
-            --cap-drop=ALL \
-            --security-opt=no-new-privileges \
-            -e GOOGLE_APPLICATION_CREDENTIALS=/tmp/gcloud-key.json \
-            -v $HOME/.config/gcloud/application_default_credentials.json:/tmp/gcloud-key.json:ro \
-            ${{ github.event.inputs.region }}-docker.pkg.dev/$PROJECT_ID/safehouse-repo/migrations:$GITHUB_SHA \
-            ${{ github.event.inputs.migration_command }} &
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            aquasec/trivy:latest image \
+            --format table \
+            --exit-code 0 \
+            $IMAGE || echo "Trivy scan completed with findings"
           
-          MIGRATION_PID=$!
-          
-          # Wait up to 5 minutes for migration to complete
-          timeout 300 wait $MIGRATION_PID || {
-            echo "ERROR: Migration timed out after 5 minutes"
-            docker kill $(docker ps -q --filter ancestor=${{ github.event.inputs.region }}-docker.pkg.dev/$PROJECT_ID/safehouse-repo/migrations:$GITHUB_SHA) 2>/dev/null || true
-            exit 1
-          }
-
-      - name: Verify migration status
-        run: |
-          echo "Verifying migration status"
-          
-          timeout 60 docker run --rm \
-            --memory="128m" \
-            --memory-swap="128m" \
-            --cpus="0.25" \
-            --pids-limit 20 \
-            --cap-drop=ALL \
-            --security-opt=no-new-privileges \
-            -e GOOGLE_APPLICATION_CREDENTIALS=/tmp/gcloud-key.json \
-            -v $HOME/.config/gcloud/application_default_credentials.json:/tmp/gcloud-key.json:ro \
-            ${{ github.event.inputs.region }}-docker.pkg.dev/$PROJECT_ID/safehouse-repo/migrations:$GITHUB_SHA \
-            version
+          echo "Security scan completed for migration image: $IMAGE"
