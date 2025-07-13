@@ -70,7 +70,10 @@ install_cloud_sql_proxy() {
 }
 
 get_iam_token() {
-    if [ -n "$DB_SERVICE_ACCOUNT" ]; then
+    if [ -n "$GOOGLE_ACCESS_TOKEN" ]; then
+        echo "Using provided Google access token"
+        echo "$GOOGLE_ACCESS_TOKEN"
+    elif [ -n "$DB_SERVICE_ACCOUNT" ]; then
         echo "Getting IAM token with service account impersonation: $DB_SERVICE_ACCOUNT"
         gcloud auth print-access-token --impersonate-service-account="$DB_SERVICE_ACCOUNT"
     else
@@ -81,6 +84,11 @@ get_iam_token() {
 
 setup_iam_database_connection() {
     echo "=== Setting up IAM database connection ==="
+
+    if [ -n "$GOOGLE_ACCESS_TOKEN" ]; then
+        echo "Authenticating gcloud with provided token"
+        echo "$GOOGLE_ACCESS_TOKEN" | gcloud auth activate-service-account --access-token-file=-
+    fi
 
     CONNECTION_NAME=$(gcloud sql instances describe "$INSTANCE_NAME" \
         --project="$PROJECT_ID" \
