@@ -175,6 +175,86 @@ setup_database_connection() {
     unset PGPASSWORD DB_PASSWORD_VALUE
 }
 
+setup_iam_database_connection() {
+    echo "=== Setting up IAM database connection ==="
+
+    if [ -n "$CONNECTION_NAME" ]; then
+        echo "Using provided connection name: $CONNECTION_NAME"
+    else
+        CONNECTION_NAME=$(gcloud sql instances describe "$INSTANCE_NAME" \
+            --project="$PROJECT_ID" \
+            --format="value(connectionName)")
+    fi
+
+    if [ -z "$CONNECTION_NAME" ]; then
+        echo "ERROR: Could not get connection name for instance $INSTANCE_NAME"
+        exit 1
+    fi
+    echo "Connection name: $CONNECTION_NAME"
+
+    install_cloud_sql_proxy
+
+    mkdir -p /tmp/cloudsql
+    echo "=== Starting Cloud SQL Proxy with Unix socket ==="
+    if [ -n "$GOOGLE_ACCESS_TOKEN" ]; then
+        ${PROXY_BIN:-cloud-sql-proxy} --unix-socket /tmp/cloudsql --token "$GOOGLE_ACCESS_TOKEN" "$CONNECTION_NAME" &
+    else
+        ${PROXY_BIN:-cloud-sql-proxy} --unix-socket /tmp/cloudsql "$CONNECTION_NAME" &
+    fi
+    PROXY_PID=$!
+    echo "Cloud SQL Proxy started (PID: $PROXY_PID)"
+
+    SOCKET_PATH="/tmp/cloudsql/$CONNECTION_NAME"
+    echo "Waiting for Unix socket to be ready: $SOCKET_PATH"
+    for i in $(seq 1 30); do
+        if [ -S "$SOCKET_PATH" ]; then
+            echo "Unix socket is ready!"
+            break
+        fi
+        if [ "$i" -eq 30 ]; then
+            echo "ERROR: Unix socket failed to appear within 30 seconds"
+            exit 1
+        fi
+        sleep 1
+    done
+
+    echo "=== Getting IAM token for database authentication ==="
+    IAM_TOKEN=$(get_iam_token)
+
+    if [ -z "$IAM_TOKEN" ]; then
+        echo "ERROR: Could not get IAM access token"
+        exit 1
+    fi
+
+    export PGPASSWORD="$IAM_TOKEN"
+    if psql -h "$SOCKET_PATH" -U "$DATABASE_USER" -d "$DATABASE_NAME" -c "SELECT 1;" > /dev/null 2>&1; then
+        echo "IAM database connection successful!"
+    else
+        echo "ERROR: Cannot connect to database with IAM authentication"
+        unset PGPASSWORD
+        exit 1
+    fi
+    unset PGPASSWORD
+
+    echo "=== Ensuring migrations table exists ==="
+    IAM_TOKEN_FRESH=$(get_iam_token)
+    export PGPASSWORD="$IAM_TOKEN_FRESH"
+    psql -h "$SOCKET_PATH" -U "$DATABASE_USER" -d "$DATABASE_NAME" -c "
+    CREATE TABLE IF NOT EXISTS schema_migrations (
+        version bigint NOT NULL PRIMARY KEY,
+        dirty boolean NOT NULL
+    );" > /dev/null 2>&1
+    unset PGPASSWORD IAM_TOKEN_FRESH
+}
+
+setup_connection() {
+    if [ "$USE_IAM_AUTH" = "true" ]; then
+        setup_iam_database_connection
+    else
+        setup_database_connection
+    fi
+}
+
 cleanup() {
     if [ -n "$PROXY_PID" ]; then
         echo "Cleaning up Cloud SQL Proxy (PID: $PROXY_PID)"
@@ -338,7 +418,7 @@ case $MIGRATION_COMMAND in
         ;;
     "up")
         validate_environment
-        setup_database_connection
+        setup_connection
         echo "=== Running migration: up ==="
         echo "Running all pending migrations"
         run_migration up
@@ -346,7 +426,7 @@ case $MIGRATION_COMMAND in
         ;;
     "down")
         validate_environment
-        setup_database_connection
+        setup_connection
         echo "=== Running migration: down ==="
         echo "Rolling back one migration"
         run_migration down 1
@@ -354,7 +434,7 @@ case $MIGRATION_COMMAND in
         ;;
     "down-all")
         validate_environment
-        setup_database_connection
+        setup_connection
         echo "=== Running migration: down-all ==="
         echo "Rolling back all migrations"
         run_migration down -all
@@ -362,7 +442,7 @@ case $MIGRATION_COMMAND in
         ;;
     "version")
         validate_environment
-        setup_database_connection
+        setup_connection
         echo "=== Running migration: version ==="
         echo "Current migration version:"
         run_migration version
@@ -375,7 +455,7 @@ case $MIGRATION_COMMAND in
             exit 1
         fi
         validate_environment
-        setup_database_connection
+        setup_connection
         echo "=== Running migration: force $2 ==="
         echo "Forcing migration to version $2"
         run_migration force "$2"
@@ -388,7 +468,7 @@ case $MIGRATION_COMMAND in
             exit 1
         fi
         validate_environment
-        setup_database_connection
+        setup_connection
         echo "=== Running migration: goto $2 ==="
         echo "Migrating to version $2"
         run_migration goto "$2"
