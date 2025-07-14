@@ -86,14 +86,15 @@ setup_iam_database_connection() {
     echo "=== Setting up IAM database connection ==="
 
     if [ -n "$GOOGLE_ACCESS_TOKEN" ]; then
-        echo "Using provided Google access token for gcloud"
-        echo "$GOOGLE_ACCESS_TOKEN" | gcloud auth activate-service-account --access-token-file=-
-        gcloud config set project "$PROJECT_ID"
+        echo "Using provided Google access token for API calls"
+        CONNECTION_NAME=$(curl -s -H "Authorization: Bearer $GOOGLE_ACCESS_TOKEN" \
+            "https://sqladmin.googleapis.com/sql/v1beta4/projects/$PROJECT_ID/instances/$INSTANCE_NAME" | \
+            grep -o '"connectionName":"[^"]*"' | cut -d'"' -f4)
+    else
+        CONNECTION_NAME=$(gcloud sql instances describe "$INSTANCE_NAME" \
+            --project="$PROJECT_ID" \
+            --format="value(connectionName)")
     fi
-
-    CONNECTION_NAME=$(gcloud sql instances describe "$INSTANCE_NAME" \
-        --project="$PROJECT_ID" \
-        --format="value(connectionName)")
 
     if [ -z "$CONNECTION_NAME" ]; then
         echo "ERROR: Could not get connection name for instance $INSTANCE_NAME"
