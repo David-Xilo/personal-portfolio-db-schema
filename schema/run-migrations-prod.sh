@@ -85,11 +85,8 @@ get_iam_token() {
 setup_iam_database_connection() {
     echo "=== Setting up IAM database connection ==="
 
-    if [ -n "$GOOGLE_ACCESS_TOKEN" ]; then
-        echo "Using provided Google access token for API calls"
-        CONNECTION_NAME=$(curl -s -H "Authorization: Bearer $GOOGLE_ACCESS_TOKEN" \
-            "https://sqladmin.googleapis.com/sql/v1beta4/projects/$PROJECT_ID/instances/$INSTANCE_NAME" | \
-            grep -o '"connectionName":"[^"]*"' | cut -d'"' -f4)
+    if [ -n "$CONNECTION_NAME" ]; then
+        echo "Using provided connection name: $CONNECTION_NAME"
     else
         CONNECTION_NAME=$(gcloud sql instances describe "$INSTANCE_NAME" \
             --project="$PROJECT_ID" \
