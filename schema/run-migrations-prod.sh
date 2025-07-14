@@ -53,7 +53,7 @@ install_cloud_sql_proxy() {
         PROXY_URL="https://storage.googleapis.com/cloud-sql-connectors/cloud-sql-proxy/v${PROXY_VERSION}/${PROXY_BIN}.linux.amd64"
 
         curl -fsSL "${PROXY_URL}" -o "${PROXY_BIN}"
-        echo "${PROXY_CHECKSUM}  ${PROXY_BIN}" | sha256sum -c --quiet - || {
+        echo "${PROXY_CHECKSUM}  ${PROXY_BIN}" | sha256sum -c - || {
             echo "ERROR: checksum mismatch for ${PROXY_BIN}"
             rm -f "${PROXY_BIN}"
             exit 1
