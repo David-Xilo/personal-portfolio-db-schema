@@ -44,9 +44,9 @@ validate_environment() {
 }
 
 install_cloud_sql_proxy() {
-    PROXY_VERSION=2.8.0
+    PROXY_VERSION=2.18.0
     PROXY_BIN=cloud-sql-proxy
-    PROXY_CHECKSUM=831a5007b6a087c917bf6b46eb7df6289ea37bab7b655c9ed172b8d9e7011e78
+    PROXY_CHECKSUM=e48f49397a69a1b509a74ce025dcf76019da0dcaae17f744c524dd19e9824800
 
     if ! command -v "${PROXY_BIN}" > /dev/null; then
         echo "=== Installing Cloud SQL Proxy v${PROXY_VERSION} ==="
