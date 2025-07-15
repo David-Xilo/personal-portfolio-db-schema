@@ -70,7 +70,10 @@ install_cloud_sql_proxy() {
 }
 
 get_iam_token() {
-    if [ -n "$GOOGLE_ACCESS_TOKEN" ]; then
+    if [ -n "$DB_ACCESS_TOKEN" ]; then
+        echo "Using provided DB access token"
+        echo "$DB_ACCESS_TOKEN"
+    elif [ -n "$GOOGLE_ACCESS_TOKEN" ]; then
         echo "Using provided Google access token"
         echo "$GOOGLE_ACCESS_TOKEN"
     elif [ -n "$DB_SERVICE_ACCOUNT" ]; then
