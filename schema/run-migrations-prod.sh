@@ -200,6 +200,7 @@ setup_iam_database_connection() {
     mkdir -p /tmp/cloudsql
     echo "=== Starting Cloud SQL Proxy with Unix socket ==="
     if [ -n "$GOOGLE_ACCESS_TOKEN" ]; then
+        echo "Using $GOOGLE_ACCESS_TOKEN"
         ${PROXY_BIN:-cloud-sql-proxy} --unix-socket /tmp/cloudsql --token "$GOOGLE_ACCESS_TOKEN" "$CONNECTION_NAME" &
     else
         ${PROXY_BIN:-cloud-sql-proxy} --unix-socket /tmp/cloudsql "$CONNECTION_NAME" &
