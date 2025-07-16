@@ -144,6 +144,10 @@ setup_database_connection() {
     SOCKET_FILE="$SOCKET_PATH/.s.PGSQL.5432"
     echo "Waiting for Unix socket to be ready: $SOCKET_FILE"
     for i in $(seq 1 30); do
+        echo "Checking iteration $i..."
+        ls -la /tmp/cloudsql/ || echo "Directory doesn't exist"
+        ls -la /tmp/cloudsql/"$CONNECTION_NAME"/ || echo "Connection directory doesn't exist"
+
         if [ -S "$SOCKET_FILE" ]; then
             echo "Unix socket is ready!"
             break
