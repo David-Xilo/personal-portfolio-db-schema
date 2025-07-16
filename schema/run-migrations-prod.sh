@@ -132,7 +132,7 @@ setup_database_connection() {
 
     echo "=== Starting Cloud SQL Proxy with Unix socket ==="
     if [ -n "$GOOGLE_ACCESS_TOKEN" ]; then
-        ${PROXY_BIN:-cloud-sql-proxy} --unix-socket /tmp/cloudsql --token "$GOOGLE_ACCESS_TOKEN" "$CONNECTION_NAME" &
+        ${PROXY_BIN:-cloud-sql-proxy} --unix-socket /tmp/cloudsql --private-ip --token "$GOOGLE_ACCESS_TOKEN" "$CONNECTION_NAME" &
     else
         ${PROXY_BIN:-cloud-sql-proxy} --unix-socket /tmp/cloudsql "$CONNECTION_NAME" &
     fi
@@ -207,7 +207,7 @@ setup_iam_database_connection() {
     echo "=== Starting Cloud SQL Proxy with Unix socket ==="
     if [ -n "$GOOGLE_ACCESS_TOKEN" ]; then
         echo "Using provided GOOGLE_ACCESS_TOKEN"
-        ${PROXY_BIN:-cloud-sql-proxy} --unix-socket /tmp/cloudsql --token "$GOOGLE_ACCESS_TOKEN" "$CONNECTION_NAME" &
+        ${PROXY_BIN:-cloud-sql-proxy} --unix-socket /tmp/cloudsql --private-ip --token "$GOOGLE_ACCESS_TOKEN" "$CONNECTION_NAME" &
     else
         ${PROXY_BIN:-cloud-sql-proxy} --unix-socket /tmp/cloudsql "$CONNECTION_NAME" &
     fi
