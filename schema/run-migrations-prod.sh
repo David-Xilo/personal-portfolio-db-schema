@@ -140,7 +140,7 @@ setup_database_connection() {
     echo "Cloud SQL Proxy started (PID: $PROXY_PID)"
 
     # Wait for socket to be ready
-    SOCKET_PATH="/tmp/cloudsql/$CONNECTION_NAME/.s.PGSQL.5432"
+    SOCKET_PATH="/tmp/cloudsql/$CONNECTION_NAME"
     echo "Waiting for Unix socket to be ready: $SOCKET_PATH"
     for i in $(seq 1 30); do
         if [ -S "$SOCKET_PATH" ]; then
@@ -208,7 +208,7 @@ setup_iam_database_connection() {
     PROXY_PID=$!
     echo "Cloud SQL Proxy started (PID: $PROXY_PID)"
 
-    SOCKET_PATH="/tmp/cloudsql/$CONNECTION_NAME/.s.PGSQL.5432"
+    SOCKET_PATH="/tmp/cloudsql/$CONNECTION_NAME"
     echo "Waiting for Unix socket to be ready: $SOCKET_PATH"
     for i in $(seq 1 30); do
         if [ -S "$SOCKET_PATH" ]; then
