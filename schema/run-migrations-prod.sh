@@ -230,6 +230,8 @@ setup_iam_database_connection() {
         exit 1
     fi
 
+    echo "$IAM_TOKEN"
+
     export PGPASSWORD="$IAM_TOKEN"
     if psql -h "$SOCKET_PATH" -U "$DATABASE_USER" -d "$DATABASE_NAME" -c "SELECT 1;" > /dev/null 2>&1; then
         echo "IAM database connection successful!"
@@ -238,11 +240,11 @@ setup_iam_database_connection() {
         unset PGPASSWORD
         exit 1
     fi
-    unset PGPASSWORD
+#    unset PGPASSWORD
 
     echo "=== Ensuring migrations table exists ==="
-    IAM_TOKEN_FRESH=$(get_iam_token)
-    export PGPASSWORD="$IAM_TOKEN_FRESH"
+#    IAM_TOKEN_FRESH=$(get_iam_token)
+#    export PGPASSWORD="$IAM_TOKEN_FRESH"
     psql -h "$SOCKET_PATH" -U "$DATABASE_USER" -d "$DATABASE_NAME" -c "
     CREATE TABLE IF NOT EXISTS schema_migrations (
         version bigint NOT NULL PRIMARY KEY,
