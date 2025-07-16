@@ -141,9 +141,10 @@ setup_database_connection() {
 
     # Wait for socket to be ready
     SOCKET_PATH="/tmp/cloudsql/$CONNECTION_NAME"
-    echo "Waiting for Unix socket to be ready: $SOCKET_PATH"
+    SOCKET_FILE="$SOCKET_PATH/.s.PGSQL.5432"
+    echo "Waiting for Unix socket to be ready: $SOCKET_FILE"
     for i in $(seq 1 30); do
-        if [ -S "$SOCKET_PATH" ]; then
+        if [ -S "$SOCKET_FILE" ]; then
             echo "Unix socket is ready!"
             break
         fi
