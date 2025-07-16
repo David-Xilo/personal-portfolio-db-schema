@@ -200,7 +200,7 @@ setup_iam_database_connection() {
     mkdir -p /tmp/cloudsql
     echo "=== Starting Cloud SQL Proxy with Unix socket ==="
     if [ -n "$GOOGLE_ACCESS_TOKEN" ]; then
-        echo "Using $GOOGLE_ACCESS_TOKEN"
+        echo "Using provided GOOGLE_ACCESS_TOKEN"
         ${PROXY_BIN:-cloud-sql-proxy} --unix-socket /tmp/cloudsql --token "$GOOGLE_ACCESS_TOKEN" "$CONNECTION_NAME" &
     else
         ${PROXY_BIN:-cloud-sql-proxy} --unix-socket /tmp/cloudsql "$CONNECTION_NAME" &
@@ -222,29 +222,40 @@ setup_iam_database_connection() {
         sleep 1
     done
 
-    echo "=== Getting IAM token for database authentication ==="
+    echo "=== Getting fresh IAM token for database authentication ==="
     IAM_TOKEN=$(get_iam_token)
+    echo "Token obtained (length: ${#IAM_TOKEN})"
+    echo "Token: ${IAM_TOKEN}..."
 
-    if [ -z "$IAM_TOKEN" ]; then
-        echo "ERROR: Could not get IAM access token"
-        exit 1
-    fi
-
-    echo "$IAM_TOKEN"
-
+    echo "=== Testing database connection with IAM token ==="
     export PGPASSWORD="$IAM_TOKEN"
-    if psql -h "$SOCKET_PATH" -U "$DATABASE_USER" -d "$DATABASE_NAME" -c "SELECT 1;" > /dev/null 2>&1; then
-        echo "IAM database connection successful!"
+
+    echo "Connection details:"
+    echo "  Socket: $SOCKET_PATH"
+    echo "  User: $DATABASE_USER"
+    echo "  Database: $DATABASE_NAME"
+    echo "  Project: $PROJECT_ID"
+
+    # Test with verbose error output
+    echo "Attempting connection..."
+    if psql -h "$SOCKET_PATH" -U "$DATABASE_USER" -d "$DATABASE_NAME" -c "SELECT version();" -v ON_ERROR_STOP=1 2>&1; then
+        echo "✓ IAM database connection successful!"
     else
-        echo "ERROR: Cannot connect to database with IAM authentication"
+        PSQL_ERROR=$?
+        echo "✗ Connection failed with exit code: $PSQL_ERROR"
+
+        # Try again with more verbose output
+        echo "Detailed error output:"
+        psql -h "$SOCKET_PATH" -U "$DATABASE_USER" -d "$DATABASE_NAME" -c "SELECT 1;" -v ON_ERROR_STOP=1 -v VERBOSITY=verbose 2>&1 || true
+
         unset PGPASSWORD
         exit 1
     fi
-#    unset PGPASSWORD
+    unset PGPASSWORD
 
     echo "=== Ensuring migrations table exists ==="
-#    IAM_TOKEN_FRESH=$(get_iam_token)
-#    export PGPASSWORD="$IAM_TOKEN_FRESH"
+    IAM_TOKEN_FRESH=$(get_iam_token)
+    export PGPASSWORD="$IAM_TOKEN_FRESH"
     psql -h "$SOCKET_PATH" -U "$DATABASE_USER" -d "$DATABASE_NAME" -c "
     CREATE TABLE IF NOT EXISTS schema_migrations (
         version bigint NOT NULL PRIMARY KEY,
