@@ -215,14 +215,16 @@ setup_iam_database_connection() {
     echo "Cloud SQL Proxy started (PID: $PROXY_PID)"
 
     SOCKET_PATH="/tmp/cloudsql/$CONNECTION_NAME"
+    SOCKET_FILE="$SOCKET_PATH/.s.PGSQL.5432"
     echo "Waiting for Unix socket to be ready: $SOCKET_PATH"
     for i in $(seq 1 30); do
-        if [ -S "$SOCKET_PATH" ]; then
+        if [ -S "$SOCKET_FILE" ]; then
             echo "Unix socket is ready!"
             break
         fi
         if [ "$i" -eq 30 ]; then
             echo "ERROR: Unix socket failed to appear within 30 seconds"
+            echo "Inside setup_iam_database_connection"
             exit 1
         fi
         sleep 1
