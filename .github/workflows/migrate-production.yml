@@ -1,4 +1,4 @@
-name: Build and Push Migration Image
+name: unused
 
 on:
   workflow_dispatch:
@@ -33,22 +33,22 @@ jobs:
           echo "Validating migration file structure"
           
           # Check if migrations directory exists
-          if [ ! -d "migrations" ]; then
+          if [ ! -d "schema/migrations" ]; then
             echo "ERROR: migrations/ directory not found"
             exit 1
           fi
           
           # Check for .sql files
-          SQL_FILES=$(find migrations -name "*.sql" | wc -l)
+          SQL_FILES=$(find schema/migrations -name "*.sql" | wc -l)
           if [ $SQL_FILES -eq 0 ]; then
-            echo "WARNING: No .sql files found in migrations/"
+            echo "WARNING: No .sql files found in schema/migrations/"
           else
             echo "Found $SQL_FILES SQL migration files"
           fi
           
           # Check for required scripts
-          if [ ! -f "run-migrations-prod.sh" ]; then
-            echo "ERROR: run-migrations-prod.sh not found"
+          if [ ! -f "schema/run-migrations-prod.sh" ]; then
+            echo "ERROR: schema/run-migrations-prod.sh not found"
             exit 1
           fi
           
@@ -149,15 +149,13 @@ jobs:
           echo "Testing migration image functionality"
           IMAGE="${{ steps.meta.outputs.primary_tag }}"
           
-          # Test that the image can run and show help
-          docker run --rm $IMAGE --help || echo "Help command not available, continuing"
+          # Test help command
+          echo "Testing help command"
+          docker run --rm $IMAGE --help
           
           # Test that required tools are available in the image
           echo "Checking required tools in image"
-          docker run --rm $IMAGE sh -c "which migrate && which psql && which gcloud" || {
-            echo "ERROR: Required tools not found in image"
-            exit 1
-          }
+          docker run --rm $IMAGE test-tools
           
           echo "Migration image test passed"
 
