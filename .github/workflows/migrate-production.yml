@@ -1,4 +1,4 @@
-name: Build and Push Migration Image
+name: unused
 
 on:
   workflow_dispatch:
