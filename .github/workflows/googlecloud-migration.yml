@@ -1,4 +1,4 @@
-name: unused
+name: Google Cloud (unused)
 
 on:
   workflow_dispatch:

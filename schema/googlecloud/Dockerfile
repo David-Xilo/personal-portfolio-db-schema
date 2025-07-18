@@ -15,8 +15,8 @@ RUN adduser -D -s /bin/sh migrate-user && \
     mkdir -p /migrations && \
     chown migrate-user:migrate-user /migrations
 
-COPY schema/migrations /migrations
-COPY schema/run-migrations-postgres.sh ./run-migrations.sh
+COPY ../migrations /migrations
+COPY run-migrations-postgres.sh ./run-migrations.sh
 RUN chmod +x run-migrations.sh
 
 WORKDIR /

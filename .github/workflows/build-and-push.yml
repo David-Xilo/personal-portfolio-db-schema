@@ -1,4 +1,4 @@
-name: Build and Push Database Images
+name: Build and Push Images (unused)
 
 on:
   workflow_dispatch:

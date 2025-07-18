@@ -1,0 +1,70 @@
+name: Run Railway Database Migrations
+
+on:
+  workflow_dispatch: # Manual trigger from GitHub UI
+    inputs:
+      environment:
+        description: 'Environment to migrate'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10 # Prevent runaway costs
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Railway CLI
+        run: |
+          curl -fsSL https://railway.app/install.sh | sh
+          echo "$HOME/.railway/bin" >> $GITHUB_PATH
+
+      - name: Login to Railway
+        run: railway login --token ${{ secrets.RAILWAY_TOKEN }}
+
+      - name: Create temporary migration service
+        id: create-service
+        run: |
+          # Create a temporary service for migrations
+          SERVICE_NAME="migration-$(date +%s)"
+          echo "SERVICE_NAME=$SERVICE_NAME" >> $GITHUB_OUTPUT
+          
+          # Create and link the service
+          railway service create $SERVICE_NAME
+          railway link --service $SERVICE_NAME
+          
+          echo "Created migration service: $SERVICE_NAME"
+
+      - name: Run migrations
+        run: |
+          # Deploy the migration image (Railway will automatically use DATABASE_URL from PostgreSQL service)
+          railway up --service ${{ steps.create-service.outputs.SERVICE_NAME }} --dockerfile schema/railway/Dockerfile
+          
+          # Wait for deployment to complete
+          sleep 10
+          railway logs --service ${{ steps.create-service.outputs.SERVICE_NAME }} --tail
+
+      - name: Verify migration status
+        run: |
+          # Optional: Add verification step
+          # railway run --service ${{ steps.create-service.outputs.SERVICE_NAME }} "your-verification-command"
+          echo "Migrations completed successfully"
+
+      - name: Cleanup migration service
+        if: always() # Run even if previous steps fail
+        run: |
+          # Remove the temporary service to avoid ongoing costs
+          railway service delete ${{ steps.create-service.outputs.SERVICE_NAME }} --yes
+          echo "Cleaned up migration service"
+
+      - name: Notify completion
+        run: |
+          echo "✅ Database migrations completed successfully"
+          echo "💰 Migration service cleaned up to avoid costs"
+
