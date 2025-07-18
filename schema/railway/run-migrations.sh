@@ -2,6 +2,17 @@
 
 set -e
 
+# ADD this section:
+echo "🐳 Migration container starting..."
+echo "Arguments received: $*"
+echo "Working directory: $(pwd)"
+echo "Migration files available:"
+ls -la /migrations/ || echo "No migrations directory found"
+
+# Wait a moment for Railway to set up environment variables
+sleep 2
+
+# Then your existing code continues...
 TIMEOUT=${MIGRATION_TIMEOUT:-30}
 VERBOSE=${MIGRATION_VERBOSE:-false}
 DRY_RUN=${MIGRATION_DRY_RUN:-false}
@@ -49,7 +60,12 @@ if [ "$DRY_RUN" = "true" ]; then
     exit 0
 fi
 
-COMMAND=${1:-up}
+if [ $# -eq 0 ]; then
+    COMMAND="up"
+    set -- "up"
+else
+    COMMAND="$1"
+fi
 echo "🔄 Running migration: $COMMAND"
 
 if migrate -path /migrations -database "$DATABASE_URL" "$@"; then
@@ -64,3 +80,14 @@ else
     echo "❌ Migration failed"
     exit 1
 fi
+
+echo "✅ Migrations completed successfully"
+
+# Show final migration version
+echo "📋 Final migration version:"
+migrate -path /migrations -database "$DATABASE_URL" version
+
+# ADD these lines:
+echo "🐳 Migration container finished - exiting"
+sleep 1  # Give logs time to flush
+exit 0

@@ -24,9 +24,5 @@ RUN chmod +x run-migrations.sh && \
 WORKDIR /
 USER migrate-user
 
-# Add health check for better observability
-HEALTHCHECK --interval=10s --timeout=5s --start-period=5s --retries=1 \
-    CMD migrate -path /migrations -database "$DATABASE_URL" version > /dev/null || exit 1
-
 ENTRYPOINT ["./run-migrations.sh"]
 CMD ["up"]
