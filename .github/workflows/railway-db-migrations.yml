@@ -1,4 +1,4 @@
-name: Run Railway Database Migrations
+name: Run Railway Database Migrations (unused)
 
 on:
   workflow_dispatch: # Manual trigger from GitHub UI
