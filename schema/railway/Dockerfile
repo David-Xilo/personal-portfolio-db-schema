@@ -16,8 +16,8 @@ RUN adduser -D -s /bin/sh migrate-user && \
     mkdir -p /migrations && \
     chown migrate-user:migrate-user /migrations
 
-COPY migrations/ /migrations/
-COPY schema/railway/run-migrations.sh ./run-migrations.sh
+COPY ../migrations/ /migrations/
+COPY run-migrations.sh ./run-migrations.sh
 RUN chmod +x run-migrations.sh && \
     chown migrate-user:migrate-user run-migrations.sh
 
