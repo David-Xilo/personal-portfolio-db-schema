@@ -28,24 +28,13 @@ jobs:
         run: |
           echo "Validating project structure"
           
-          # Check postgres dockerfile
-          if [ ! -f "postgresql/Dockerfile" ]; then
-            echo "ERROR: postgresql/Dockerfile not found"
-            exit 1
-          fi
-          
           # Check migrations
           if [ ! -d "schema/migrations" ]; then
             echo "ERROR: schema/migrations/ directory not found"
             exit 1
           fi
           
-          if [ ! -f "schema/run-migrations-postgres.sh" ]; then
-            echo "ERROR: schema/run-migrations-postgres.sh not found"
-            exit 1
-          fi
-          
-          if [ ! -f "Dockerfile" ]; then
+          if [ ! -f "schema/railway/Dockerfile" ]; then
             echo "ERROR: Migration Dockerfile not found"
             exit 1
           fi
@@ -54,11 +43,8 @@ jobs:
 
       - name: Test Docker builds
         run: |
-          echo "Testing postgres build"
-          docker build -t test-postgres postgresql/
-          
           echo "Testing migration build"
-          docker build -t test-migrations .
+          docker build -t test-migrations schema/railway/
           
           echo "Build tests passed"
 
@@ -109,7 +95,7 @@ jobs:
       - name: Build and push migration image
         uses: docker/build-push-action@v5
         with:
-          context: .
+          context: schema/railway/
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           cache-from: type=gha
