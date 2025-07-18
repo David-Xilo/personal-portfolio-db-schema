@@ -95,7 +95,7 @@ jobs:
       - name: Build and push migration image
         uses: docker/build-push-action@v5
         with:
-          context: schema/railway/
+          context: .
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           cache-from: type=gha
