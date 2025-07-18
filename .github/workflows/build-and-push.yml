@@ -44,7 +44,7 @@ jobs:
       - name: Test Docker builds
         run: |
           echo "Testing migration build"
-          docker build -f schema/railway/Dockerfile ./schema
+          docker build -f schema/railway/Dockerfile .
           
           echo "Build tests passed"
 
