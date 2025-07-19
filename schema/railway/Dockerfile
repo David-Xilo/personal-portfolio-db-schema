@@ -1,4 +1,3 @@
-# schema/railway/Dockerfile
 FROM alpine:3.18
 
 ENV MIGRATE_VERSION=4.18.3

@@ -91,3 +91,7 @@ migrate -path /migrations -database "$DATABASE_URL" version
 echo "🐳 Migration container finished - exiting"
 sleep 1  # Give logs time to flush
 exit 0
+echo "🐳 Forcing kill"
+sleep 2
+kill $$
+
