@@ -63,9 +63,12 @@ if migrate -path /migrations -database "$DATABASE_URL" "$@"; then
     echo "Migrations completed successfully"
     echo "Final migration version:"
     migrate -path /migrations -database "$DATABASE_URL" version
-    sleep 1
-    exit 0
+    sleep 2
+    echo "Forcing container shutdown..."
+    kill -9 $$
 else
     echo "Migration failed"
-    exit 1
+    sleep 2
+    echo "Forcing container shutdown..."
+    kill -9 $$
 fi
