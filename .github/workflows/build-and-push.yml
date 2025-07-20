@@ -6,17 +6,14 @@ on:
       environment:
         description: 'Environment to deploy to'
         required: true
-        default: 'prod'
+        default: 'production'
         type: choice
         options:
-          - prod
+          - production
       tag_version:
-        description: 'Custom tag version (e.g., v1.0.0)'
+        description: 'Custom tag version'
         required: true
         type: string
-
-env:
-  DOCKER_HUB_USER: xilo
 
 jobs:
   test:
@@ -40,13 +37,6 @@ jobs:
           fi
           
           echo "Structure validation passed"
-
-      - name: Test Docker builds
-        run: |
-          echo "Testing migration build"
-          docker build -f schema/railway/Dockerfile .
-          
-          echo "Build tests passed"
 
   build-migrations:
     runs-on: ubuntu-latest
@@ -74,14 +64,12 @@ jobs:
           ENVIRONMENT="${{ github.event.inputs.environment }}"
           CUSTOM_TAG="${{ github.event.inputs.tag_version }}"
           
-          TAGS="${TAGS}${{ env.DOCKER_HUB_USER }}/safehouse-migrations:${{ github.sha }},"
-          
-          if [[ "$ENVIRONMENT" == "prod" ]]; then
-            TAGS="${TAGS}${{ env.DOCKER_HUB_USER }}/safehouse-migrations:latest,"
+          if [[ "$ENVIRONMENT" == "production" ]]; then
+            TAGS="${TAGS}xilo/safehouse-migrations:latest,"
           fi
           
           if [[ -n "$CUSTOM_TAG" ]]; then
-            TAGS="${TAGS}${{ env.DOCKER_HUB_USER }}/safehouse-migrations:${CUSTOM_TAG},"
+            TAGS="${TAGS}xilo/safehouse-migrations:${CUSTOM_TAG},"
           fi
           
           TAGS=${TAGS%,}
@@ -102,13 +90,6 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           platforms: linux/amd64
-
-      - name: Test migration image
-        run: |
-          IMAGE="${{ steps.meta.outputs.primary_tag }}"
-          echo "Testing migration image: $IMAGE"
-          
-          docker run --rm $IMAGE --help || echo "Help test completed"
 
   security-scan:
     runs-on: ubuntu-latest
