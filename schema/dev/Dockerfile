@@ -12,15 +12,10 @@ RUN apk add --no-cache postgresql-client ca-certificates curl && \
     rm migrate.tar.gz && \
     apk del curl
 
-RUN adduser -D -s /bin/sh migrate-user && \
-    mkdir -p /migrations && \
-    chown migrate-user:migrate-user /migrations
-
 COPY migrations /migrations
-COPY run-migrations-dev.sh ./run-migrations-dev.sh
+COPY dev/run-migrations-dev.sh ./run-migrations-dev.sh
 RUN chmod +x run-migrations-dev.sh
 
-USER migrate-user
 WORKDIR /
 
 ENTRYPOINT ["./run-migrations-dev.sh"]
