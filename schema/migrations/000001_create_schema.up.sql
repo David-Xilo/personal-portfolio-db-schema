@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS PROJECT_GROUPS (
      deleted_at TIMESTAMP DEFAULT NULL,
      title VARCHAR(255) UNIQUE NOT NULL,
      description VARCHAR(255) NOT NULL,
-    project_type PROJECT_TYPE NOT NULL DEFAULT 'undefined'
+     project_type PROJECT_TYPE NOT NULL DEFAULT 'undefined'
 );
 
 CREATE TYPE GAME_GENRES AS ENUM ('undefined', 'strategy', 'table top', 'RPG');
