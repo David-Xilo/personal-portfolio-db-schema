@@ -68,7 +68,7 @@ INSERT INTO GAME_REPOSITORIES (project_group_id, title, description, link_to_git
 SELECT pr.project_group_id, pr.title, pr.description, pr.link_to_git,
        'undefined',
        NULL,
-       '' || LOWER(REPLACE(pr.title, ' ', '-')),
+       pr.link_to_git,
        pr.created_at, pr.updated_at, pr.deleted_at
 FROM PROJECT_REPOSITORIES pr
          JOIN PROJECT_GROUPS pg ON pr.project_group_id = pg.id
