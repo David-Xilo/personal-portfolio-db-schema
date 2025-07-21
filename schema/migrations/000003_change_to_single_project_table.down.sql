@@ -1,7 +1,6 @@
--- Remove the unique constraint first
+
 ALTER TABLE PROJECT_GROUPS DROP CONSTRAINT IF EXISTS UNIQUE_LINK_TO_PROJECT;
 
--- Recreate the original repository tables with their original schemas
 CREATE TABLE IF NOT EXISTS GAME_REPOSITORIES (
      id SERIAL PRIMARY KEY,
      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -67,8 +66,8 @@ WHERE pg.project_type = 'finance';
 
 INSERT INTO GAME_REPOSITORIES (project_group_id, title, description, link_to_git, genre, rating, link_to_store, created_at, updated_at, deleted_at)
 SELECT pr.project_group_id, pr.title, pr.description, pr.link_to_git,
-       'undefined', -- Default genre
-       NULL, -- Default rating
+       'undefined',
+       NULL,
        '' || LOWER(REPLACE(pr.title, ' ', '-')),
        pr.created_at, pr.updated_at, pr.deleted_at
 FROM PROJECT_REPOSITORIES pr
