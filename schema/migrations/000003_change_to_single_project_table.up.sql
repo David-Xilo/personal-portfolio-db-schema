@@ -33,6 +33,21 @@ INSERT INTO PROJECT_REPOSITORIES (project_group_id, title, description, link_to_
 SELECT project_group_id, title, description, link_to_git FROM GAME_REPOSITORIES
 WHERE link_to_git IS NOT NULL;
 
+INSERT INTO PROJECT_REPOSITORIES (project_group_id, title, description, link_to_git)
+SELECT
+    pg.id,
+    'safehouse-orchestration',
+    'The Orchestration repo for the website',
+    'https://github.com/David-Xilo/safehouse-orchestration'
+FROM PROJECT_GROUPS pg
+WHERE pg.title = 'Safehouse'
+  AND pg.project_type = 'tech'
+  AND pg.deleted_at IS NULL
+  AND NOT EXISTS (
+    SELECT 1 FROM PROJECT_REPOSITORIES
+    WHERE title = 'safehouse-orchestration'
+);
+
 CREATE INDEX idx_projects_group_id ON PROJECT_REPOSITORIES(project_group_id);
 
 ALTER TABLE GAME_REPOSITORIES DROP CONSTRAINT IF EXISTS fk_game_projects_group;
