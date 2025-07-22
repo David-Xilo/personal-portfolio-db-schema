@@ -65,11 +65,11 @@ jobs:
           CUSTOM_TAG="${{ github.event.inputs.tag_version }}"
           
           if [[ "$ENVIRONMENT" == "production" ]]; then
-            TAGS="${TAGS}xilo/safehouse-migrations:latest,"
+            TAGS="${TAGS}xilo/personal-portfolio-migrations:latest,"
           fi
           
           if [[ -n "$CUSTOM_TAG" ]]; then
-            TAGS="${TAGS}xilo/safehouse-migrations:${CUSTOM_TAG},"
+            TAGS="${TAGS}xilo/personal-portfolio-migrations:${CUSTOM_TAG},"
           fi
           
           TAGS=${TAGS%,}
