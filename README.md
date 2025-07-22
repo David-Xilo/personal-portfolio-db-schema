@@ -1,6 +1,6 @@
 # personal-portfolio-db-schema
 
-Database schema and migration scripts for the Safehouse personal portfolio website. 
+Database schema and migration scripts for the personal portfolio website. 
 
 Contains PostgreSQL table definitions and data insertion using migrations.
 
