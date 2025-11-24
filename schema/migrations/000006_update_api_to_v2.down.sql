@@ -1,0 +1,13 @@
+ALTER TABLE PROJECT_REPOSITORIES DROP COLUMN IF EXISTS SHOW_PRIORITY;
+ALTER TABLE PROJECT_GROUPS DROP COLUMN IF EXISTS SHOW_PRIORITY;
+
+DELETE FROM PROJECT_REPOSITORIES
+WHERE title IN ('personal-portfolio-main-back-v2', 'personal-portfolio-main-front-v2');
+
+UPDATE PROJECT_GROUPS
+SET TITLE = 'Safehouse',
+    UPDATED_AT = CURRENT_TIMESTAMP
+WHERE description = 'A basic personal portfolio website' AND project_type = 'tech';
+
+
+COMMIT;

@@ -1,8 +1,8 @@
 INSERT INTO CONTACTS (name, email, linkedin, github, credly, active)
-SELECT 'David Bugalho de Moura', 'david.dbmoura@gmail.com', 'https://www.linkedin.com/in/davidbmoura/', 'https://github.com/David-Xilo', 'https://www.credly.com/users/david-bugalho-de-moura', true
+SELECT 'David Bugalho de Moura', '', 'https://www.linkedin.com/in/davidbmoura/', 'https://github.com/David-Xilo', 'https://www.credly.com/users/david-bugalho-de-moura', true
 WHERE NOT EXISTS (
     SELECT 1 FROM CONTACTS
-    WHERE email = 'david.dbmoura@gmail.com'
+    WHERE email = ''
 );
 
 
