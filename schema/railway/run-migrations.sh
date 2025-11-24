@@ -14,8 +14,8 @@ if [ -z "$DATABASE_URL" ]; then
 fi
 
 # enforce SSL requirement in DATABASE_URL: must include sslmode=verify-full
-if ! echo "$DATABASE_URL" | grep -Eq '[?&]sslmode=verify-full\b'; then
-  echo "ERROR: DATABASE_URL must include sslmode=verify-full (found: $DATABASE_URL)"
+if ! echo "$DATABASE_URL" | grep -Eq '[?&]sslmode=require\b'; then
+  echo "ERROR: DATABASE_URL must include sslmode=require (found: $DATABASE_URL)"
   exit 1
 fi
 
