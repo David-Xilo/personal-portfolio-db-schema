@@ -13,6 +13,12 @@ if [ -z "$DATABASE_URL" ]; then
     exit 1
 fi
 
+# enforce SSL requirement in DATABASE_URL: must include sslmode=verify-full
+if ! echo "$DATABASE_URL" | grep -Eq '[?&]sslmode=verify-full\b'; then
+  echo "ERROR: DATABASE_URL must include sslmode=verify-full (found: $DATABASE_URL)"
+  exit 1
+fi
+
 echo "Starting database migrations"
 echo "Database URL: ${DATABASE_URL%@*}@***" # Hide password in logs
 echo "Migration command: $*"
